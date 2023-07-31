@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import AvatarImage from "../components/AvatarImage";
 import { capitalizeFirstLetter } from "../utils";
@@ -42,12 +42,16 @@ const SingleProject = () => {
     autoConnect: false,
     query: { projectId: id },
   };
-  const socket = io.connect(baseUrl, connectionObject);
-  const projectSocket = io.connect(`${baseUrl}/${id}`, connectionObject);
+
+  const socketRef = useRef(io.connect(baseUrl, connectionObject));
+  const projectSocketRef = useRef(
+    io.connect(`${baseUrl}/${id}`, connectionObject)
+  );
 
   const joinProject = () => {
     if (connected) {
       console.log("send a signal...");
+      const projectSocket = projectSocketRef.current;
       projectSocket.emit("joinProject", {
         message: `Like to join the project ${id}`,
         projectId: id,
@@ -68,6 +72,8 @@ const SingleProject = () => {
     fetchProject();
   }, [id]);
   useEffect(() => {
+    const socket = socketRef.current;
+    const projectSocket = projectSocketRef.current;
     socket.connect();
     socket.on("connect", () => {
       console.log("Socket connected");
